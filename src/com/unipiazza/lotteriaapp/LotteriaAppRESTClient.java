@@ -1,5 +1,8 @@
 package com.unipiazza.lotteriaapp;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import android.content.Context;
 import android.util.Log;
 
@@ -9,6 +12,10 @@ import com.koushikdutta.ion.Ion;
 import com.koushikdutta.ion.Response;
 
 public class LotteriaAppRESTClient {
+
+	private static final String HEADER_STRING1 = "Accept";
+	private static final String HEADER_STRING2 = "application/unipiazza.v2";
+
 	private static LotteriaAppRESTClient instance;
 
 	public static LotteriaAppRESTClient getInstance(Context context) {
@@ -146,6 +153,79 @@ public class LotteriaAppRESTClient {
 									callback.onSuccess(result.getResult());
 								else
 									callback.onFail(result.getResult(), e);
+							} catch (Exception ex) {
+								ex.printStackTrace();
+								callback.onFail(result.getResult(), ex);
+							}
+						} else
+						if (result != null)
+							callback.onFail(result.getResult(), e);
+						else
+							callback.onFail(null, e);
+					}
+				});
+	}
+
+	public void getPrize(final Context context, final String hash, final ShopHttpCallback callback) {
+		JsonObject json = new JsonObject();
+		json.addProperty("hash_pass", hash);
+
+		String url;
+		String access_token = CurrentAdmin.getInstance().getAccessToken(context);
+		url = UnipiazzaParams.LOTTERY_URL + "?access_token=" + access_token;
+
+		Ion.with(context)
+				.load("GET", url)
+				.addHeader(HEADER_STRING1, HEADER_STRING2)
+				.setJsonObjectBody(json)
+				.asJsonObject()
+				.withResponse()
+				.setCallback(new FutureCallback<Response<JsonObject>>() {
+					@Override
+					public void onCompleted(Exception e, Response<JsonObject> result) {
+						if (result != null && result.getHeaders().getResponseCode() == 401) {
+							refreshToken(context, CurrentAdmin.getInstance().getRefreshToken(context), new HttpCallback() {
+
+								@Override
+								public void onSuccess(JsonObject result) {
+									getPrize(context, hash, callback);
+								}
+
+								@Override
+								public void onFail(JsonObject result, Throwable e) {
+									callback.onFail(result, e);
+								}
+							});
+							return;
+						}
+						if (e == null) {
+							try {
+								Log.v("UNIPIAZZA", "result=" + result.getResult());
+								Log.v("UNIPIAZZA", "result=" + result.getHeaders().getResponseCode());
+								if (result.getResult().get("error") == null) {
+									JsonObject json = result.getResult().getAsJsonObject();
+									Prize prize = new Prize(0
+											, json.get("image_title").getAsString()
+											, json.get("name").getAsString());
+									Shop shop = new Shop(0, ""
+											, "", json.get("shop_name").getAsString()
+											, json.get("shop_address").getAsString()
+											, 0
+											, 0
+											, 0
+											, ""
+											, ""
+											, false
+											, false
+											, false
+											, null);
+									List<Prize> prizes = new ArrayList<Prize>();
+									prizes.add(prize);
+									shop.setShop_prizes(prizes);
+									callback.onSuccess(shop);
+								} else {
+									callback.onFail(result.getResult(), e);
+								}
 							} catch (Exception ex) {
 								ex.printStackTrace();
 								callback.onFail(result.getResult(), ex);

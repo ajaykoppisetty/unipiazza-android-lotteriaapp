@@ -5,6 +5,15 @@
     android:background="@color/orange"
     tools:context=".HomeTap" >
 
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:indeterminateOnly="true"
+        android:visibility="gone" />
+
     <ImageView
         android:id="@+id/taploop"
         android:layout_width="1280dp"

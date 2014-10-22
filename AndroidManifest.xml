@@ -22,8 +22,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.unipiazza.lotteriaapp.WaitingTap" />
-        <activity android:name="com.unipiazza.lotteriaapp.Result" />
+        <activity
+            android:name="com.unipiazza.lotteriaapp.WaitingTap"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name="com.unipiazza.lotteriaapp.Result"
+            android:screenOrientation="landscape" />
     </application>
 
 </manifest>

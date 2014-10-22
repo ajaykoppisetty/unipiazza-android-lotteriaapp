@@ -22,6 +22,70 @@ import android.text.format.DateUtils;
 
 public class Utils {
 
+	public static int getPrizeImageByTitle(String title) {
+		if (title.equals("Panino") || title.equals("Hamburger"))
+			return R.drawable.up_hamburger;
+		else if (title.equals("Spritz"))
+			return R.drawable.up_spritz;
+		else if (title.equals("Caffè"))
+			return R.drawable.up_bar;
+		else if (title.equals("Cicchetto"))
+			return R.drawable.up_club_sandwich;
+		else if (title.equals("Stickers"))
+			return R.drawable.up_sticker_small;
+		else if (title.equals("Frappè") || title.equals("Spremuta"))
+			return R.drawable.up_juice;
+		else if (title.equals("Birra") || title.equals("Birreria") || title.equals("Pub"))
+			return R.drawable.up_beer;
+		else if (title.equals("Prosecco"))
+			return R.drawable.up_wine;
+		else if (title.equals("Cocktail"))
+			return R.drawable.up_cocktail;
+		else if (title.equals("Toast"))
+			return R.drawable.up_toast;
+		else if (title.equals("Limoncello"))
+			return R.drawable.up_limoncello;
+		else if (title.equals("Shottino"))
+			return R.drawable.up_shots;
+		else if (title.equals("Macedonia"))
+			return R.drawable.up_salad;
+		else if (title.equals("Menù"))
+			return R.drawable.up_star;
+		else if (title.equals("Bibita Analcolica"))
+			return R.drawable.up_coke;
+		else if (title.equals("Trancio di Pizza"))
+			return R.drawable.up_pizza_slice;
+		else if (title.equals("Tramezzino"))
+			return R.drawable.up_sandwich;
+		else if (title.equals("Cartoleria") || title.equals("Stampa"))
+			return R.drawable.up_print;
+		else if (title.equals("Bott. Vino"))
+			return R.drawable.up_wine_bottleglass;
+		else if (title.equals("Caraffa Spritz"))
+			return R.drawable.up_spritz_carafe;
+		else if (title.equals("Caraffa Birra"))
+			return R.drawable.up_beer_carafe;
+		else if (title.equals("Gelato"))
+			return R.drawable.up_icecream;
+		else if (title.equals("Abbigliamento"))
+			return R.drawable.up_clothing;
+		else if (title.equals("Sconto"))
+			return R.drawable.up_discount;
+		else if (title.equals("Maglietta Personalizzabile"))
+			return R.drawable.up_shirt;
+		else if (title.equals("Penna"))
+			return R.drawable.up_pens;
+		else if (title.equals("Kebab"))
+			return R.drawable.up_kebab;
+		else if (title.equals("Cover Smartphone"))
+			return R.drawable.up_mobile;
+		else if (title.equals("Libro"))
+			return R.drawable.up_book;
+		else if (title.equals("Pizza"))
+			return R.drawable.up_pizza;
+		return R.drawable.up_diamond;
+	}
+
 	public static AlertDialog createErrorDialog(Context context, int title, int content) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(context);
 		builder.setTitle(title)

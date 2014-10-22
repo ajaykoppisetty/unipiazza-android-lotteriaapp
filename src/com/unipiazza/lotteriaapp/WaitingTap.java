@@ -23,9 +23,13 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.gson.JsonObject;
 
 public class WaitingTap extends Activity {
 
@@ -35,6 +39,8 @@ public class WaitingTap extends Activity {
 	private NfcAdapter mNfcAdapter;
 	// Progress Dialog
 	private ProgressDialog pDialog;
+	private ProgressBar progressBar;
+	private ImageView gyroView;
 	public static final String TAG = "NfcDemo";
 
 	//Controllo Smartphone NFC
@@ -42,8 +48,10 @@ public class WaitingTap extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_waiting_tap);
-		ImageView gyroView = (ImageView) findViewById(R.id.taploop);
+		gyroView = (ImageView) findViewById(R.id.taploop);
 		gyroView.setBackgroundResource(R.drawable.loop_animation);
+		progressBar = (ProgressBar) findViewById(R.id.progressBar);
+
 		AnimationDrawable gyroAnimation = (AnimationDrawable) gyroView.getBackground();
 		gyroAnimation.start();
 		mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
@@ -219,6 +227,8 @@ public class WaitingTap extends Activity {
 
 		//JSON Ricerca ID
 		class SearchId extends AsyncTask<String, String, String> {
+			private long startLoader;
+
 			/**
 			 * Before starting background thread Show Progress Dialog
 			 * */
@@ -247,23 +257,68 @@ public class WaitingTap extends Activity {
 			/**
 			 * After completing background task Dismiss the progress dialog
 			 * **/
-			protected void onPostExecute(String tag_id_string) {
+			protected void onPostExecute(final String tag_id_string) {
 				// dismiss the dialog once done
 				pDialog.dismiss();
-				if (tag_id_string != null) {
-					//Messaggio che compare sempre
-					//Toast.makeText(WaitingTap.this, file_url, Toast.LENGTH_LONG).show();
-				}
-				Intent i = new Intent(WaitingTap.this, Result.class);
-				i.putExtra("hash", tag_id_string);
-				startActivity(i);
-			}
+				if (!tagExists(tag_id_string)) {
+					progressBar.setVisibility(View.VISIBLE);
+					gyroView.setVisibility(View.GONE);
+					startLoader = System.currentTimeMillis();
+					LotteriaAppRESTClient.getInstance(getApplicationContext()).getPrize(getApplicationContext(), tag_id_string, new ShopHttpCallback() {
 
+						@Override
+						public void onSuccess(final Shop result) {
+							(new Thread() {
+								public void run() {
+									while (System.currentTimeMillis() - startLoader < 10 * 1000) {
+										;
+									}
+									runOnUiThread(new Thread() {
+										public void run() {
+											progressBar.setVisibility(View.GONE);
+											gyroView.setVisibility(View.VISIBLE);
+											saveUserPass(tag_id_string);
+											Intent i = new Intent(WaitingTap.this, Result.class);
+											i.putExtra("shop", result);
+											startActivity(i);
+										};
+									});
+								};
+							}).start();
+
+						}
+
+						@Override
+						public void onFail(JsonObject result, Throwable e) {
+							progressBar.setVisibility(View.GONE);
+							gyroView.setVisibility(View.VISIBLE);
+							if (result != null && result.get("error") != null) {
+								Utils.createErrorDialog(getApplicationContext(), R.string.error_dialog, result.get("msg").getAsString()).show();
+							}
+
+						}
+					});
+				} else
+					Utils.createErrorDialog(getApplicationContext(), R.string.error_dialog, R.string.error_dialog_msg).show();
+			}
 		}
 	}
 
 	@Override
 	public void onBackPressed() {
 		//Non uscire, cane!
+	}
+
+	protected void saveUserPass(String tag_id_string) {
+		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		Editor editor = pref.edit();
+		editor.putBoolean(tag_id_string, true);
+		editor.commit();
+	}
+
+	private boolean tagExists(String tag_id_string) {
+		return false;
+		//SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		//return pref.getBoolean(tag_id_string, false);
 	}
 }
