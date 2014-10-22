@@ -1,0 +1,10 @@
+<resources>
+
+    <string name="app_name">Unipiazza-LotteriaApp</string>
+    <string name="error_dialog">Attenzione</string>
+    <string name="error_dialog_internet">Spiacenti, impossibile accedere ad Unipiazza. Controlla la tua connessione di rete o riprova.</string>
+    <string name="login_fail">L\'email o la password che hai inserito non sono corretti. Riprova.</string>
+
+    <color name="orange">#f58220</color>
+
+</resources>
