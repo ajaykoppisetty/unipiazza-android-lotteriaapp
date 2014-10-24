@@ -43,7 +43,7 @@ public class Result extends Activity {
 
 		prize_text.setText(shop.getShop_prizes().get(0).getDescrizione());
 		prize_image.setImageResource(Utils.getPrizeImageByTitle(shop.getShop_prizes().get(0).getNome()));
-
+		//user_name.setText(shop.getDescription());
 		shop_name.setText(shop.getNome());
 		shop_text.setText(shop.getVia());
 	}
