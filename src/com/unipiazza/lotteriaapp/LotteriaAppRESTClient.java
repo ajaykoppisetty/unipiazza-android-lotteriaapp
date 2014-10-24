@@ -215,6 +215,7 @@ public class LotteriaAppRESTClient {
 											, 0
 											, ""
 											, ""
+											//, json.get("user_name").getAsString()
 											, false
 											, false
 											, false

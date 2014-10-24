@@ -34,15 +34,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.MediaController;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
-
-import com.google.gson.JsonObject;
 
 public class WaitingTap extends Activity {
 
@@ -57,29 +51,28 @@ public class WaitingTap extends Activity {
 	private BluetoothDevice device;
 	private ConnectThread mConnectThread;
 	private long startLoader;
+	private VideoView myVideoView;
 	public static final String TAG = "NfcDemo";
-	
+
 	//Controllo Smartphone NFC
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_waiting_tap);
-		String SrcPath = "http://www.dodoftw.it/Unipiazza/home.mp4";
-		super.onCreate(savedInstanceState);
-		VideoView myVideoView = (VideoView)findViewById(R.id.myvideoview);
+
+		myVideoView = (VideoView) findViewById(R.id.myvideoview);
 		myVideoView.setOnPreparedListener(new OnPreparedListener() {
-		    @Override
-		    public void onPrepared(MediaPlayer mp) {
-		        mp.setLooping(true);
-		    }
+			@Override
+			public void onPrepared(MediaPlayer mp) {
+				mp.setLooping(true);
+			}
 		});
-		
-		
-		myVideoView.setVideoPath(SrcPath);
-		myVideoView.setMediaController(new MediaController(this));
+
+		myVideoView.setVideoPath("android.resource://" + getPackageName() + "/" + R.raw.home);
+		myVideoView.setMediaController(null);
 		myVideoView.requestFocus();
 		myVideoView.start();
-		
+
 		mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
 		PendingIntent pendingIntent = PendingIntent.getActivity(
 				this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
@@ -129,6 +122,11 @@ public class WaitingTap extends Activity {
 		setupForegroundDispatch(this, mNfcAdapter);
 		if (mConnectThread != null && !mConnectThread.isAlive())
 			mConnectThread.start();
+
+		myVideoView.setVideoPath("android.resource://" + getPackageName() + "/" + R.raw.home);
+		myVideoView.setMediaController(null);
+		myVideoView.requestFocus();
+		myVideoView.start();
 	}
 
 	@Override
@@ -158,7 +156,6 @@ public class WaitingTap extends Activity {
 		handleIntent(intent);
 	}
 
-	
 	private void handleIntent(Intent intent) {
 		String action = intent.getAction();
 		if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action) ||
@@ -329,35 +326,9 @@ public class WaitingTap extends Activity {
 		Log.v("UNIPIAZZA", "tagExists");
 
 		if (!tagExists(tag_id_string)) {
-			startLoader = System.currentTimeMillis();
-			Log.v("UNIPIAZZA", "getPrize");
-			LotteriaAppRESTClient.getInstance(getApplicationContext()).getPrize(getApplicationContext(), tag_id_string, new ShopHttpCallback() {
-
-				@Override
-				public void onSuccess(final Shop result) {
-					(new Thread() {
-						public void run() {
-							runOnUiThread(new Thread() {
-								public void run() {
-									saveUserPass(tag_id_string);
-									Intent i = new Intent(WaitingTap.this, Loader.class);
-									i.putExtra("shop", result);
-									startActivity(i);
-								};
-							});
-						};
-					}).start();
-
-				}
-
-				@Override
-				public void onFail(JsonObject result, Throwable e) {
-					if (result != null && result.get("error") != null) {
-						Utils.createErrorDialog(WaitingTap.this, R.string.error_dialog, result.get("msg").getAsString()).show();
-					}
-
-				}
-			});
+			Intent i = new Intent(WaitingTap.this, Loader.class);
+			i.putExtra("tag_id_string", tag_id_string);
+			startActivity(i);
 		} else
 			Utils.createErrorDialog(getApplicationContext(), R.string.error_dialog, R.string.error_dialog_msg).show();
 	}
@@ -365,13 +336,6 @@ public class WaitingTap extends Activity {
 	@Override
 	public void onBackPressed() {
 		//Non uscire, cane!
-	}
-
-	protected void saveUserPass(String tag_id_string) {
-		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		Editor editor = pref.edit();
-		editor.putBoolean(tag_id_string, true);
-		editor.commit();
 	}
 
 	private boolean tagExists(String tag_id_string) {
@@ -412,26 +376,27 @@ public class WaitingTap extends Activity {
 	private final Handler mHandler = new Handler() {
 
 		private String tag_string;
+		private byte[] tag_byte;
 
 		@Override
 		public void handleMessage(Message msg) {
+
 			String readMessage = (String) msg.obj;
-			readMessage = readMessage.replaceAll("\n", "");
-			Log.v("UNIPIAZA", readMessage + " ");
+			Log.v("UNIPIAZA", "readMessage=" + readMessage);
 			switch (msg.what) {
 			case 2:
-				if (readMessage.startsWith("@"))
+				if (readMessage.startsWith("@")) {
 					tag_string = readMessage;
-				else
+				} else {
 					tag_string = tag_string + readMessage;
+				}
 				if (tag_string.contains("]"))
 					tag_string = tag_string.substring(0, tag_string.lastIndexOf("]") + 1);
 				if (tag_string.endsWith("]")) {
 					tag_string = tag_string.replace("@", "");
 					tag_string = tag_string.replace("]", "");
 					Log.v("UNIPIAZZA", "tag_string rilevato=" + tag_string);
-					Log.v("UNIPIAZZA", "tag_string rilevato in Hex=" + bytesToHex(tag_string.getBytes()));
-					gotTag(bytesToHex(tag_string.getBytes()));
+					gotTag(tag_string);
 				}
 				Log.i(TAG, "MESSAGE_STATE_CHANGE: " + msg.toString() + readMessage);
 				break;
@@ -443,6 +408,19 @@ public class WaitingTap extends Activity {
 		}
 
 	};
+
+	private byte[] appendByte(byte[] tag_byte, byte[] readMessageByte) {
+		byte[] tag_byte_temp = new byte[tag_byte.length + readMessageByte.length];
+		int i = 0;
+		for (; i < tag_byte.length; i++) {
+			tag_byte_temp[i] = tag_byte[i];
+		}
+		for (int z = 0; i < readMessageByte.length; z++, i++) {
+			tag_byte_temp[i] = readMessageByte[z];
+		}
+
+		return null;
+	}
 
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
