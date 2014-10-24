@@ -8,8 +8,13 @@ import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -22,8 +27,14 @@ import android.nfc.Tag;
 import android.nfc.tech.Ndef;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.ProgressBar;
@@ -43,6 +54,11 @@ public class WaitingTap extends Activity {
 	private ProgressDialog pDialog;
 	private ProgressBar progressBar;
 	private ImageView gyroView;
+	private BluetoothAdapter mBluetoothAdapter;
+	private String address;
+	private BluetoothDevice device;
+	private ConnectThread mConnectThread;
+	private long startLoader;
 	public static final String TAG = "NfcDemo";
 	
 	//Controllo Smartphone NFC
@@ -80,13 +96,42 @@ public class WaitingTap extends Activity {
 			mTextView.setText("L'NFC � disabilitato, abilitalo e riavvia.");
 		}
 		handleIntent(getIntent());
+
+		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+		if (mBluetoothAdapter.isEnabled()) {
+			AlertDialog.Builder miaAlert = new AlertDialog.Builder(this);
+			miaAlert.setMessage(R.string.bluetooth_arduino);
+			miaAlert.setPositiveButton("SI", new OnClickListener() {
+
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					startDeviceListActivity();
+				}
+			});
+			miaAlert.setNegativeButton("NO", new OnClickListener() {
+
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.dismiss();
+				}
+			});
+			AlertDialog alert = miaAlert.create();
+			alert.show();
+		}
+
+	}
+
+	private void startDeviceListActivity() {
+		Intent intent = new Intent(this, DeviceListActivity.class);
+		startActivityForResult(intent, 1);
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-
 		setupForegroundDispatch(this, mNfcAdapter);
+		if (mConnectThread != null && !mConnectThread.isAlive())
+			mConnectThread.start();
 	}
 
 	@Override
@@ -97,6 +142,8 @@ public class WaitingTap extends Activity {
 		 */
 		mNfcAdapter.disableForegroundDispatch(this);
 		stopForegroundDispatch(this, mNfcAdapter);
+		if (mConnectThread != null && mConnectThread.isAlive())
+			mConnectThread.cancel();
 		super.onPause();
 	}
 
@@ -123,6 +170,8 @@ public class WaitingTap extends Activity {
 			Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
 			Log.v("value ", "TAG Preso : " + tag);
 			byte[] tag_id = tag.getId();
+			Log.i("tag ID in byte", tag_id.toString());
+
 			String tag_id_string = bytesToHex(tag_id);
 			Log.i("tag ID Appena preso", tag_id_string);
 			SharedPreferences sp19 = PreferenceManager
@@ -138,7 +187,7 @@ public class WaitingTap extends Activity {
 
 	final protected static char[] hexArray = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
-	public static String bytesToHex(byte[] bytes) {
+	private static String bytesToHex(byte[] bytes) {
 		char[] hexChars = new char[bytes.length * 2];
 		int v;
 		for (int j = 0; j < bytes.length; j++) {
@@ -241,7 +290,6 @@ public class WaitingTap extends Activity {
 
 		//JSON Ricerca ID
 		class SearchId extends AsyncTask<String, String, String> {
-			private long startLoader;
 
 			/**
 			 * Before starting background thread Show Progress Dialog
@@ -274,40 +322,56 @@ public class WaitingTap extends Activity {
 			protected void onPostExecute(final String tag_id_string) {
 				// dismiss the dialog once done
 				pDialog.dismiss();
-				if (!tagExists(tag_id_string)) {
-					startLoader = System.currentTimeMillis();
-					LotteriaAppRESTClient.getInstance(getApplicationContext()).getPrize(getApplicationContext(), tag_id_string, new ShopHttpCallback() {
 
-						@Override
-						public void onSuccess(final Shop result) {
-							(new Thread() {
-								public void run() {			
-									runOnUiThread(new Thread() {
-										public void run() {									
-											saveUserPass(tag_id_string);
-											Intent i = new Intent(WaitingTap.this, Loader.class);
-											i.putExtra("shop", result);
-											startActivity(i);
-										};
-									});
-								};
-							}).start();
-
-						}
-
-						@Override
-						public void onFail(JsonObject result, Throwable e) {
-
-							if (result != null && result.get("error") != null) {
-								Utils.createErrorDialog(getApplicationContext(), R.string.error_dialog, result.get("msg").getAsString()).show();
-							}
-
-						}
-					});
-				} else
-					Utils.createErrorDialog(getApplicationContext(), R.string.error_dialog, R.string.error_dialog_msg).show();
+				gotTag(tag_id_string);
 			}
 		}
+	}
+
+	private void gotTag(final String tag_id_string) {
+		Log.v("UNIPIAZZA", "tagExists");
+
+		if (!tagExists(tag_id_string)) {
+			progressBar.setVisibility(View.VISIBLE);
+			gyroView.setVisibility(View.GONE);
+			startLoader = System.currentTimeMillis();
+			Log.v("UNIPIAZZA", "getPrize");
+			LotteriaAppRESTClient.getInstance(getApplicationContext()).getPrize(getApplicationContext(), tag_id_string, new ShopHttpCallback() {
+
+				@Override
+				public void onSuccess(final Shop result) {
+					(new Thread() {
+						public void run() {
+							while (System.currentTimeMillis() - startLoader < 10 * 1000) {
+								;
+							}
+							runOnUiThread(new Thread() {
+								public void run() {
+									progressBar.setVisibility(View.GONE);
+									gyroView.setVisibility(View.VISIBLE);
+									saveUserPass(tag_id_string);
+									Intent i = new Intent(WaitingTap.this, Result.class);
+									i.putExtra("shop", result);
+									startActivity(i);
+								};
+							});
+						};
+					}).start();
+
+				}
+
+				@Override
+				public void onFail(JsonObject result, Throwable e) {
+					progressBar.setVisibility(View.GONE);
+					gyroView.setVisibility(View.VISIBLE);
+					if (result != null && result.get("error") != null) {
+						Utils.createErrorDialog(WaitingTap.this, R.string.error_dialog, result.get("msg").getAsString()).show();
+					}
+
+				}
+			});
+		} else
+			Utils.createErrorDialog(getApplicationContext(), R.string.error_dialog, R.string.error_dialog_msg).show();
 	}
 
 	@Override
@@ -327,4 +391,88 @@ public class WaitingTap extends Activity {
 		//SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		//return pref.getBoolean(tag_id_string, false);
 	}
+
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		Log.d(TAG, "onActivityResult " + resultCode);
+		switch (requestCode) {
+		case 1:
+			// When DeviceListActivity returns with a device to connect
+			if (resultCode == Activity.RESULT_OK) {
+				// Get the device MAC address
+				address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+				Toast.makeText(this, address, Toast.LENGTH_SHORT).show();
+				// Get the BLuetoothDevice object
+				device = mBluetoothAdapter.getRemoteDevice(address);
+
+				Toast.makeText(this, device.getName(), Toast.LENGTH_SHORT).show();
+
+				try {
+					// Attempt to connect to the device
+					mConnectThread = new ConnectThread(device, mHandler);
+					mConnectThread.start();
+
+				} catch (Exception e) {
+
+					Toast.makeText(this, "Connection Failed", Toast.LENGTH_SHORT).show();
+				}
+			}
+			break;
+
+		}
+	}
+
+	private final Handler mHandler = new Handler() {
+
+		private String tag_string;
+
+		@Override
+		public void handleMessage(Message msg) {
+			String readMessage = (String) msg.obj;
+			readMessage = readMessage.replaceAll("\n", "");
+			Log.v("UNIPIAZA", readMessage + " ");
+			switch (msg.what) {
+			case 2:
+				if (readMessage.startsWith("@"))
+					tag_string = readMessage;
+				else
+					tag_string = tag_string + readMessage;
+				if (tag_string.contains("]"))
+					tag_string = tag_string.substring(0, tag_string.lastIndexOf("]") + 1);
+				if (tag_string.endsWith("]")) {
+					tag_string = tag_string.replace("@", "");
+					tag_string = tag_string.replace("]", "");
+					Log.v("UNIPIAZZA", "tag_string rilevato=" + tag_string);
+					Log.v("UNIPIAZZA", "tag_string rilevato in Hex=" + bytesToHex(tag_string.getBytes()));
+					gotTag(bytesToHex(tag_string.getBytes()));
+				}
+				Log.i(TAG, "MESSAGE_STATE_CHANGE: " + msg.toString() + readMessage);
+				break;
+			case 1:
+
+				break;
+			}
+
+		}
+
+	};
+
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.main, menu);
+		return true;
+	};
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.bluetooth:
+			startDeviceListActivity();
+			break;
+
+		default:
+			break;
+		}
+		return super.onOptionsItemSelected(item);
+	}
+
 }
