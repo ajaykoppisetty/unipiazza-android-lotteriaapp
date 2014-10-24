@@ -120,7 +120,7 @@ public class WaitingTap extends Activity {
 	protected void onResume() {
 		super.onResume();
 		setupForegroundDispatch(this, mNfcAdapter);
-		if (mConnectThread != null && !mConnectThread.isAlive())
+		if (mConnectThread != null && mConnectThread.isInterrupted())
 			mConnectThread.start();
 
 		myVideoView.setVideoPath("android.resource://" + getPackageName() + "/" + R.raw.home);
@@ -395,6 +395,7 @@ public class WaitingTap extends Activity {
 				if (tag_string.endsWith("]")) {
 					tag_string = tag_string.replace("@", "");
 					tag_string = tag_string.replace("]", "");
+					tag_string = parse(tag_string.split("0x"));
 					Log.v("UNIPIAZZA", "tag_string rilevato=" + tag_string);
 					gotTag(tag_string);
 				}
@@ -407,20 +408,18 @@ public class WaitingTap extends Activity {
 
 		}
 
+		private String parse(String[] split) {
+			String result = "";
+			for (int i = 0; i < split.length; i++) {
+				String temp = split[i];
+				if (temp.length() == 1)
+					temp = "0" + temp;
+				result = result + temp;
+			}
+			return result;
+		}
+
 	};
-
-	private byte[] appendByte(byte[] tag_byte, byte[] readMessageByte) {
-		byte[] tag_byte_temp = new byte[tag_byte.length + readMessageByte.length];
-		int i = 0;
-		for (; i < tag_byte.length; i++) {
-			tag_byte_temp[i] = tag_byte[i];
-		}
-		for (int z = 0; i < readMessageByte.length; z++, i++) {
-			tag_byte_temp[i] = readMessageByte[z];
-		}
-
-		return null;
-	}
 
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
