@@ -2,27 +2,53 @@ package com.unipiazza.lotteriaapp;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.os.Handler;
-import android.widget.ImageView;
-import android.widget.MediaController;
-import android.widget.TextView;
+import android.preference.PreferenceManager;
 import android.widget.VideoView;
 
+import com.google.gson.JsonObject;
+
 public class Loader extends Activity {
+
+	private boolean downloaded;
+	private boolean videoFinished = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.loader);
-		String SrcPath2 = "http://www.dodoftw.it/Unipiazza/loading.mp4";
-	       super.onCreate(savedInstanceState);
-	       VideoView myVideoView2 = (VideoView)findViewById(R.id.myvideoview1);
-	       myVideoView2.setVideoPath(SrcPath2);
-	       myVideoView2.setMediaController(new MediaController(this));
-	       myVideoView2.requestFocus();
-	       myVideoView2.start();
-		final Shop shop = (Shop) getIntent().getExtras().getSerializable("shop");
+		VideoView myVideoView2 = (VideoView) findViewById(R.id.myvideoview1);
+		myVideoView2.setVideoPath("android.resource://" + getPackageName() + "/" + R.raw.loading);
+		myVideoView2.setMediaController(null);
+		myVideoView2.requestFocus();
+		myVideoView2.start();
+		final String tag_id_string = getIntent().getExtras().getString("tag_id_string");
+		final Intent i = new Intent(Loader.this, Result.class);
+
+		LotteriaAppRESTClient.getInstance(getApplicationContext()).getPrize(getApplicationContext(), tag_id_string, new ShopHttpCallback() {
+
+			@Override
+			public void onSuccess(final Shop result) {
+				downloaded = true;
+				i.putExtra("shop", result);
+				saveUserPass(tag_id_string);
+				if (videoFinished) {
+					startActivity(i);
+					finish();
+				}
+			}
+
+			@Override
+			public void onFail(JsonObject result, Throwable e) {
+				if (result != null && result.get("error") != null) {
+					Utils.createErrorDialog(Loader.this, R.string.error_dialog, result.get("msg").getAsString()).show();
+				}
+
+			}
+		});
 
 		Handler handler = new Handler();
 		handler.postDelayed(new Runnable() {
@@ -31,14 +57,22 @@ public class Loader extends Activity {
 				runOnUiThread(new Thread() {
 					@Override
 					public void run() {
-						Intent i = new Intent(Loader.this, Result.class);
-						i.putExtra("shop", shop);
-						startActivity(i);
+						if (downloaded) {
+							startActivity(i);
+							finish();
+						} else
+							videoFinished = true;
 					}
 				});
 			}
 		}, 9 * 1000);
 
+	}
 
+	protected void saveUserPass(String tag_id_string) {
+		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		Editor editor = pref.edit();
+		editor.putBoolean(tag_id_string, true);
+		editor.commit();
 	}
 }
