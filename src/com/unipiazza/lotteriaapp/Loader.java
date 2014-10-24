@@ -65,7 +65,7 @@ public class Loader extends Activity {
 					}
 				});
 			}
-		}, 9 * 1000);
+		}, 6 * 1000);
 
 	}
 

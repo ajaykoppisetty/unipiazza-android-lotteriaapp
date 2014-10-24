@@ -32,7 +32,7 @@ public class Result extends Activity {
 					}
 				});
 			}
-		}, 9 * 2000);
+		}, 10 * 1000);
 
 		prize_image = (ImageView) findViewById(R.id.prize_image);
 		prize_text = (TextView) findViewById(R.id.prize_text);
