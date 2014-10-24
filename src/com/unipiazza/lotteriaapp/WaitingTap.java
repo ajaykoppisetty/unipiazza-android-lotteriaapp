@@ -13,7 +13,8 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.graphics.drawable.AnimationDrawable;
+import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnPreparedListener;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
@@ -23,11 +24,12 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.View;
 import android.widget.ImageView;
+import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
 import com.google.gson.JsonObject;
 
@@ -42,18 +44,29 @@ public class WaitingTap extends Activity {
 	private ProgressBar progressBar;
 	private ImageView gyroView;
 	public static final String TAG = "NfcDemo";
-
+	
 	//Controllo Smartphone NFC
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_waiting_tap);
-		gyroView = (ImageView) findViewById(R.id.taploop);
-		gyroView.setBackgroundResource(R.drawable.loop_animation);
 		progressBar = (ProgressBar) findViewById(R.id.progressBar);
-
-		AnimationDrawable gyroAnimation = (AnimationDrawable) gyroView.getBackground();
-		gyroAnimation.start();
+		String SrcPath = "http://www.dodoftw.it/Unipiazza/home.mp4";
+		super.onCreate(savedInstanceState);
+		VideoView myVideoView = (VideoView)findViewById(R.id.myvideoview);
+		myVideoView.setOnPreparedListener(new OnPreparedListener() {
+		    @Override
+		    public void onPrepared(MediaPlayer mp) {
+		        mp.setLooping(true);
+		    }
+		});
+		
+		
+		myVideoView.setVideoPath(SrcPath);
+		myVideoView.setMediaController(new MediaController(this));
+		myVideoView.requestFocus();
+		myVideoView.start();
+		
 		mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
 		PendingIntent pendingIntent = PendingIntent.getActivity(
 				this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
@@ -101,6 +114,7 @@ public class WaitingTap extends Activity {
 		handleIntent(intent);
 	}
 
+	
 	private void handleIntent(Intent intent) {
 		String action = intent.getAction();
 		if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action) ||
@@ -261,24 +275,17 @@ public class WaitingTap extends Activity {
 				// dismiss the dialog once done
 				pDialog.dismiss();
 				if (!tagExists(tag_id_string)) {
-					progressBar.setVisibility(View.VISIBLE);
-					gyroView.setVisibility(View.GONE);
 					startLoader = System.currentTimeMillis();
 					LotteriaAppRESTClient.getInstance(getApplicationContext()).getPrize(getApplicationContext(), tag_id_string, new ShopHttpCallback() {
 
 						@Override
 						public void onSuccess(final Shop result) {
 							(new Thread() {
-								public void run() {
-									while (System.currentTimeMillis() - startLoader < 10 * 1000) {
-										;
-									}
+								public void run() {			
 									runOnUiThread(new Thread() {
-										public void run() {
-											progressBar.setVisibility(View.GONE);
-											gyroView.setVisibility(View.VISIBLE);
+										public void run() {									
 											saveUserPass(tag_id_string);
-											Intent i = new Intent(WaitingTap.this, Result.class);
+											Intent i = new Intent(WaitingTap.this, Loader.class);
 											i.putExtra("shop", result);
 											startActivity(i);
 										};
@@ -290,8 +297,7 @@ public class WaitingTap extends Activity {
 
 						@Override
 						public void onFail(JsonObject result, Throwable e) {
-							progressBar.setVisibility(View.GONE);
-							gyroView.setVisibility(View.VISIBLE);
+
 							if (result != null && result.get("error") != null) {
 								Utils.createErrorDialog(getApplicationContext(), R.string.error_dialog, result.get("msg").getAsString()).show();
 							}

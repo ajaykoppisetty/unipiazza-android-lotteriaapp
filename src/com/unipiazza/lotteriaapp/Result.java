@@ -4,7 +4,9 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.widget.ImageView;
+import android.widget.MediaController;
 import android.widget.TextView;
+import android.widget.VideoView;
 
 public class Result extends Activity {
 
@@ -17,6 +19,7 @@ public class Result extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.result);
+	       super.onCreate(savedInstanceState);
 
 		Handler handler = new Handler();
 		handler.postDelayed(new Runnable() {
@@ -29,7 +32,7 @@ public class Result extends Activity {
 					}
 				});
 			}
-		}, 10 * 1000);
+		}, 10 * 2000);
 
 		prize_image = (ImageView) findViewById(R.id.prize_image);
 		prize_text = (TextView) findViewById(R.id.prize_text);

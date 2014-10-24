@@ -5,7 +5,7 @@
     <string name="error_dialog_msg">Attenzione, l\'utente ha già giocato!</string>
     <string name="error_dialog_internet">Spiacenti, impossibile accedere ad Unipiazza. Controlla la tua connessione di rete o riprova.</string>
     <string name="login_fail">L\'email o la password che hai inserito non sono corretti. Riprova.</string>
-    <string name="hai_vinto">Hai vinto</string>
+    <string name="hai_vinto">Complimenti! Hai vinto</string>
 
     <color name="orange">#f58220</color>
 

@@ -25,6 +25,9 @@
         <activity
             android:name="com.unipiazza.lotteriaapp.WaitingTap"
             android:screenOrientation="landscape" />
+         <activity
+            android:name="com.unipiazza.lotteriaapp.Loader"
+            android:screenOrientation="landscape" />
         <activity
             android:name="com.unipiazza.lotteriaapp.Result"
             android:screenOrientation="landscape" />

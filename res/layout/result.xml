@@ -3,9 +3,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/orange"
-    android:gravity="center"
+    android:gravity="center_horizontal"
     android:orientation="vertical"
-    android:padding="10dp" >
+    android:paddingTop="40dp" >
 
     <TextView
         android:id="@+id/hai_vinto"
@@ -19,6 +19,7 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:background="@drawable/bg_orange"
         android:orientation="horizontal" >
 
         <ImageView
@@ -30,8 +31,11 @@
             android:id="@+id/prize_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:text="Una Caraffa"
             android:textColor="#fff"
             android:textSize="20sp" />
+
     </LinearLayout>
 
     <LinearLayout
@@ -45,6 +49,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="#fff"
+            android:text="3 Scalini"
             android:textSize="18sp" />
 
         <TextView
@@ -52,6 +57,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="#fff"
+            android:text="Via san Farancesco 12"
             android:textSize="16sp" />
     </LinearLayout>
 
