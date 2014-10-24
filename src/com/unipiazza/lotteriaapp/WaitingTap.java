@@ -52,8 +52,6 @@ public class WaitingTap extends Activity {
 	private NfcAdapter mNfcAdapter;
 	// Progress Dialog
 	private ProgressDialog pDialog;
-	private ProgressBar progressBar;
-	private ImageView gyroView;
 	private BluetoothAdapter mBluetoothAdapter;
 	private String address;
 	private BluetoothDevice device;
@@ -66,7 +64,6 @@ public class WaitingTap extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_waiting_tap);
-		progressBar = (ProgressBar) findViewById(R.id.progressBar);
 		String SrcPath = "http://www.dodoftw.it/Unipiazza/home.mp4";
 		super.onCreate(savedInstanceState);
 		VideoView myVideoView = (VideoView)findViewById(R.id.myvideoview);
@@ -332,8 +329,6 @@ public class WaitingTap extends Activity {
 		Log.v("UNIPIAZZA", "tagExists");
 
 		if (!tagExists(tag_id_string)) {
-			progressBar.setVisibility(View.VISIBLE);
-			gyroView.setVisibility(View.GONE);
 			startLoader = System.currentTimeMillis();
 			Log.v("UNIPIAZZA", "getPrize");
 			LotteriaAppRESTClient.getInstance(getApplicationContext()).getPrize(getApplicationContext(), tag_id_string, new ShopHttpCallback() {
@@ -342,15 +337,10 @@ public class WaitingTap extends Activity {
 				public void onSuccess(final Shop result) {
 					(new Thread() {
 						public void run() {
-							while (System.currentTimeMillis() - startLoader < 10 * 1000) {
-								;
-							}
 							runOnUiThread(new Thread() {
 								public void run() {
-									progressBar.setVisibility(View.GONE);
-									gyroView.setVisibility(View.VISIBLE);
 									saveUserPass(tag_id_string);
-									Intent i = new Intent(WaitingTap.this, Result.class);
+									Intent i = new Intent(WaitingTap.this, Loader.class);
 									i.putExtra("shop", result);
 									startActivity(i);
 								};
@@ -362,8 +352,6 @@ public class WaitingTap extends Activity {
 
 				@Override
 				public void onFail(JsonObject result, Throwable e) {
-					progressBar.setVisibility(View.GONE);
-					gyroView.setVisibility(View.VISIBLE);
 					if (result != null && result.get("error") != null) {
 						Utils.createErrorDialog(WaitingTap.this, R.string.error_dialog, result.get("msg").getAsString()).show();
 					}
