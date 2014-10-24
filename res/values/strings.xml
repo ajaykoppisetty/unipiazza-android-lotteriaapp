@@ -5,7 +5,9 @@
     <string name="error_dialog_msg">Attenzione, l\'utente ha già giocato!</string>
     <string name="error_dialog_internet">Spiacenti, impossibile accedere ad Unipiazza. Controlla la tua connessione di rete o riprova.</string>
     <string name="login_fail">L\'email o la password che hai inserito non sono corretti. Riprova.</string>
-    <string name="hai_vinto">Complimenti! Hai vinto</string>
+    <string name="hai_vinto">Hai vinto:</string>
+    <string name="presso">presso:</string>
+    <string name="complimenti">Complimenti!</string>
     <string name="bluetooth_arduino">Il bluetooth è abilitato, quindi si vuole usare arduino?</string>
     <string name="title_paired_devices">Paired Devices</string>
     <string name="title_other_devices">Other Available Devices</string>

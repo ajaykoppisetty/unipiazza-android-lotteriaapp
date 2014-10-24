@@ -5,7 +5,16 @@
     android:background="@color/orange"
     android:gravity="center_horizontal"
     android:orientation="vertical"
-    android:paddingTop="40dp" >
+    android:paddingTop="20dp" >
+    
+        <TextView
+        android:id="@+id/complimenti"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/complimenti"
+        android:textColor="#fff"
+        android:textSize="45sp"
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/hai_vinto"
@@ -19,6 +28,8 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:padding="14dp"
         android:background="@drawable/bg_orange"
         android:orientation="horizontal" >
 
@@ -31,34 +42,50 @@
             android:id="@+id/prize_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="20dp"
             android:text="Una Caraffa"
-            android:textColor="#fff"
-            android:textSize="20sp" />
+            android:textColor="#f58220"
+            android:textSize="27sp"
+            android:textStyle="bold" />
 
     </LinearLayout>
+
+
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="10dp"
+        android:gravity="center_horizontal"
         android:orientation="vertical" >
 
+            <TextView
+        android:id="@+id/presso"
+        android:text="@string/presso"
+        android:textColor="#fff"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="24sp"
+         />
         <TextView
             android:id="@+id/shop_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="#fff"
             android:text="3 Scalini"
-            android:textSize="18sp" />
+            android:textStyle="bold"
+            android:textSize="35sp" />
 
         <TextView
             android:id="@+id/shop_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#fff"
+            android:textColor="#c9c9c9"
+            android:textStyle="italic"
             android:text="Via san Farancesco 12"
-            android:textSize="16sp" />
+            android:textSize="24sp" />
     </LinearLayout>
 
 </LinearLayout>
