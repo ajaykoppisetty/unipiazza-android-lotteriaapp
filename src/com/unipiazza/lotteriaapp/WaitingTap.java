@@ -30,6 +30,9 @@ import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -125,7 +128,7 @@ public class WaitingTap extends Activity {
 		 */
 		mNfcAdapter.disableForegroundDispatch(this);
 		stopForegroundDispatch(this, mNfcAdapter);
-		if (mConnectThread != null)
+		if (mConnectThread != null && mConnectThread.isAlive())
 			mConnectThread.cancel();
 		super.onPause();
 	}
@@ -152,6 +155,8 @@ public class WaitingTap extends Activity {
 			Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
 			Log.v("value ", "TAG Preso : " + tag);
 			byte[] tag_id = tag.getId();
+			Log.i("tag ID in byte", tag_id.toString());
+
 			String tag_id_string = bytesToHex(tag_id);
 			Log.i("tag ID Appena preso", tag_id_string);
 			SharedPreferences sp19 = PreferenceManager
@@ -308,10 +313,13 @@ public class WaitingTap extends Activity {
 	}
 
 	private void gotTag(final String tag_id_string) {
+		Log.v("UNIPIAZZA", "tagExists");
+
 		if (!tagExists(tag_id_string)) {
 			progressBar.setVisibility(View.VISIBLE);
 			gyroView.setVisibility(View.GONE);
 			startLoader = System.currentTimeMillis();
+			Log.v("UNIPIAZZA", "getPrize");
 			LotteriaAppRESTClient.getInstance(getApplicationContext()).getPrize(getApplicationContext(), tag_id_string, new ShopHttpCallback() {
 
 				@Override
@@ -399,13 +407,28 @@ public class WaitingTap extends Activity {
 
 	private final Handler mHandler = new Handler() {
 
+		private String tag_string;
+
 		@Override
 		public void handleMessage(Message msg) {
 			String readMessage = (String) msg.obj;
-			Log.v("UNIPIAZA", readMessage);
+			readMessage = readMessage.replaceAll("\n", "");
+			Log.v("UNIPIAZA", readMessage + " ");
 			switch (msg.what) {
 			case 2:
-				gotTag(bytesToHex(readMessage.getBytes()));
+				if (readMessage.startsWith("@"))
+					tag_string = readMessage;
+				else
+					tag_string = tag_string + readMessage;
+				if (tag_string.contains("]"))
+					tag_string = tag_string.substring(0, tag_string.lastIndexOf("]") + 1);
+				if (tag_string.endsWith("]")) {
+					tag_string = tag_string.replace("@", "");
+					tag_string = tag_string.replace("]", "");
+					Log.v("UNIPIAZZA", "tag_string rilevato=" + tag_string);
+					Log.v("UNIPIAZZA", "tag_string rilevato in Hex=" + bytesToHex(tag_string.getBytes()));
+					gotTag(bytesToHex(tag_string.getBytes()));
+				}
 				Log.i(TAG, "MESSAGE_STATE_CHANGE: " + msg.toString() + readMessage);
 				break;
 			case 1:
@@ -416,5 +439,24 @@ public class WaitingTap extends Activity {
 		}
 
 	};
+
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.main, menu);
+		return true;
+	};
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.bluetooth:
+			startDeviceListActivity();
+			break;
+
+		default:
+			break;
+		}
+		return super.onOptionsItemSelected(item);
+	}
 
 }
