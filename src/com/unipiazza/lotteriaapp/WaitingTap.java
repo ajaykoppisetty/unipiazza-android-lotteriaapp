@@ -76,6 +76,17 @@ public class WaitingTap extends Activity {
 		mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
 		PendingIntent pendingIntent = PendingIntent.getActivity(
 				this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
+
+		if (mNfcAdapter == null) {
+			// Stop here, we definitely need NFC		
+			Toast.makeText(this, "Questo dispositivo non supporta l'NFC", Toast.LENGTH_LONG).show();
+			finish();
+			return;
+		}
+		if (!mNfcAdapter.isEnabled()) {
+			mTextView.setText("L'NFC � disabilitato, abilitalo e riavvia.");
+		}
+
 		handleIntent(getIntent());
 
 		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -111,13 +122,15 @@ public class WaitingTap extends Activity {
 	protected void onResume() {
 		super.onResume();
 
+		setupForegroundDispatch(this, mNfcAdapter);
+		if (mConnectThread != null && mConnectThread.isInterrupted())
+			mConnectThread.start();
+
 		myVideoView.setVideoPath("android.resource://" + getPackageName() + "/" + R.raw.home);
 		myVideoView.setMediaController(null);
 		myVideoView.requestFocus();
 		myVideoView.start();
 	}
-
-
 
 	@Override
 	protected void onNewIntent(Intent intent) {
@@ -410,4 +423,24 @@ public class WaitingTap extends Activity {
 		return super.onOptionsItemSelected(item);
 	}
 
+	@Override
+	protected void onPause() {
+		/**
+		 * Call this before onPause, otherwise an IllegalArgumentException is
+		 * thrown as well.
+		 */
+		mNfcAdapter.disableForegroundDispatch(this);
+		stopForegroundDispatch(this, mNfcAdapter);
+		if (mConnectThread != null && mConnectThread.isAlive())
+			mConnectThread.cancel();
+		super.onPause();
+	}
+
+	public static void setupForegroundDispatch(final Activity activity, NfcAdapter adapter) {
+		final Intent intent = new Intent(activity.getApplicationContext(), activity.getClass());
+		intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		final PendingIntent pendingIntent = PendingIntent.getActivity(activity.getApplicationContext(), 0, intent, 0);
+		String[][] techList = new String[][] {};
+		adapter.enableForegroundDispatch(activity, pendingIntent, null, techList);
+	}
 }
