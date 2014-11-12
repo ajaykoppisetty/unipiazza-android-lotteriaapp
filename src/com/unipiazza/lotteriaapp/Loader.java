@@ -1,6 +1,9 @@
 package com.unipiazza.lotteriaapp;
 
 import android.app.Activity;
+import android.app.Dialog;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -44,7 +47,15 @@ public class Loader extends Activity {
 			@Override
 			public void onFail(JsonObject result, Throwable e) {
 				if (result != null && result.get("error") != null) {
-					Utils.createErrorDialog(Loader.this, R.string.error_dialog, result.get("msg").getAsString()).show();
+					Dialog dialog = Utils.createErrorDialog(Loader.this, R.string.error_dialog, result.get("msg").getAsString());
+					dialog.setOnDismissListener(new OnDismissListener() {
+
+						@Override
+						public void onDismiss(DialogInterface dialog) {
+							finish();
+						}
+					});
+					dialog.show();
 				}
 
 			}
