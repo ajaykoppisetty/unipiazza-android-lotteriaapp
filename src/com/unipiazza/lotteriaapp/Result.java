@@ -36,15 +36,15 @@ public class Result extends Activity {
 
 		prize_image = (ImageView) findViewById(R.id.prize_image);
 		prize_text = (TextView) findViewById(R.id.prize_text);
-		shop_name = (TextView) findViewById(R.id.shop_name);
-		shop_text = (TextView) findViewById(R.id.shop_text);
+		//shop_name = (TextView) findViewById(R.id.shop_name);
+		//shop_text = (TextView) findViewById(R.id.shop_text);
 
 		Shop shop = (Shop) getIntent().getExtras().getSerializable("shop");
 
 		prize_text.setText(shop.getShop_prizes().get(0).getDescrizione());
 		prize_image.setImageResource(Utils.getPrizeImageByTitle(shop.getShop_prizes().get(0).getNome()));
 		//user_name.setText(shop.getDescription());
-		shop_name.setText(shop.getNome());
-		shop_text.setText(shop.getVia());
+		//shop_name.setText(shop.getNome());
+		//shop_text.setText(shop.getVia());
 	}
 }

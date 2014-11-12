@@ -5,7 +5,7 @@
     android:background="@color/orange"
     android:gravity="center_horizontal"
     android:orientation="vertical"
-    android:paddingTop="20dp" >
+    android:paddingTop="100dp" >
     
         <TextView
         android:id="@+id/complimenti"
@@ -61,7 +61,7 @@
         android:gravity="center_horizontal"
         android:orientation="vertical" >
 
-            <TextView
+           <!--   <TextView
         android:id="@+id/presso"
         android:text="@string/presso"
         android:textColor="#fff"
@@ -85,7 +85,7 @@
             android:textColor="#c9c9c9"
             android:textStyle="italic"
             android:text="Via san Farancesco 12"
-            android:textSize="24sp" />
+            android:textSize="24sp" />-->
     </LinearLayout>
 
 </LinearLayout>

@@ -14,7 +14,7 @@ import com.koushikdutta.ion.Response;
 public class LotteriaAppRESTClient {
 
 	private static final String HEADER_STRING1 = "Accept";
-	private static final String HEADER_STRING2 = "application/unipiazza.v2";
+	private static final String HEADER_STRING2 = "application/unipiazza.v3";
 
 	private static LotteriaAppRESTClient instance;
 
